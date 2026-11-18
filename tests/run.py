@@ -1,6 +1,10 @@
 """Runs tests/run.lua with lupa (pip install lupa) when no system Lua is installed. Run from the repo root."""
 import sys
-from lupa import LuaRuntime
+# WoW runs Lua 5.1, so test on that (a newer Lua accepts syntax like // that the game rejects).
+try:
+    from lupa.lua51 import LuaRuntime
+except ImportError:
+    from lupa import LuaRuntime
 L = LuaRuntime(unpack_returned_tuples=True)
 L.execute("os.exit = function(code) error('EXIT:' .. tostring(code), 0) end")
 try:

@@ -135,7 +135,7 @@ function Graph.Distances(from, to)
         local i = size
         heap[i] = { id, d }
         while i > 1 do
-            local p = i // 2
+            local p = math.floor(i / 2)
             if heap[p][2] <= heap[i][2] then break end
             heap[p], heap[i] = heap[i], heap[p]
             i = p

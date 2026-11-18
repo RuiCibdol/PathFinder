@@ -12,7 +12,7 @@ function strsplit(sep, s)
         out[#out + 1] = s:sub(pos, i - 1)
         pos = i + #sep
     end
-    return table.unpack(out)
+    return (table.unpack or unpack)(out)
 end
 
 local ns = { db = { maps = {}, nextMapId = 1 } }
