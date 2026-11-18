@@ -124,22 +124,53 @@ function Graph.Nearest(continentID, x, y)
     return best, bestDist
 end
 
--- Dijkstra from one point over the links: distance and previous point for every reachable point.
-function Graph.Distances(from)
+-- Dijkstra from one point over the links (binary heap): distance and previous point for every
+-- reachable point. With `to`, stops as soon as that point is settled, so the result is complete
+-- for it (and for everything nearer) but not for the rest.
+function Graph.Distances(from, to)
     local dist, prev, done = { [from] = 0 }, {}, {}
-    while true do
-        local current, currentDist
-        for id, d in pairs(dist) do
-            if not done[id] and (not currentDist or d < currentDist) then current, currentDist = id, d end
+    local heap, size = { { from, 0 } }, 1
+    local function push(id, d)
+        size = size + 1
+        local i = size
+        heap[i] = { id, d }
+        while i > 1 do
+            local p = i // 2
+            if heap[p][2] <= heap[i][2] then break end
+            heap[p], heap[i] = heap[i], heap[p]
+            i = p
         end
-        if not current then break end
-        done[current] = true
-        local node = nodes[current]
-        for other in pairs(node.links) do
-            local n = nodes[other]
-            if n and not done[other] then
-                local d = currentDist + ns.Distance(node.x, node.y, n.x, n.y)
-                if not dist[other] or d < dist[other] then dist[other], prev[other] = d, current end
+    end
+    local function pop()
+        local top = heap[1]
+        heap[1], heap[size] = heap[size], nil
+        size = size - 1
+        local i = 1
+        while true do
+            local l, r, m = i * 2, i * 2 + 1, i
+            if l <= size and heap[l][2] < heap[m][2] then m = l end
+            if r <= size and heap[r][2] < heap[m][2] then m = r end
+            if m == i then break end
+            heap[m], heap[i] = heap[i], heap[m]
+            i = m
+        end
+        return top[1], top[2]
+    end
+    while size > 0 do
+        local current, currentDist = pop()
+        if not done[current] then
+            done[current] = true
+            if current == to then break end
+            local node = nodes[current]
+            for other in pairs(node and node.links or {}) do
+                local n = nodes[other]
+                if n and not done[other] then
+                    local d = currentDist + ns.Distance(node.x, node.y, n.x, n.y)
+                    if not dist[other] or d < dist[other] then
+                        dist[other], prev[other] = d, current
+                        push(other, d)
+                    end
+                end
             end
         end
     end
@@ -158,7 +189,7 @@ function Graph.PathTo(prev, from, to)
 end
 
 function Graph.ShortestPath(from, to)
-    local _, prev = Graph.Distances(from)
+    local _, prev = Graph.Distances(from, to)
     return Graph.PathTo(prev, from, to)
 end
 

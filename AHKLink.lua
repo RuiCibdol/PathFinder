@@ -15,10 +15,10 @@ local SIGNAL_KEY = "ALT-CTRL-SHIFT-F9"      -- PathFinder.ahk HeartbeatKey must 
 local ALIVE_TIMEOUT = 8                      -- seconds without a report before it counts as not running
 local CHECK_DELAY = 3                        -- seconds after starting a route to check
 -- Where PathFinder.ahk is, shown in the popup. Addons can't find out where the game is installed
--- (no API gives a disk path), so this is the usual install for the Forever beta, and
+-- (no API gives a disk path), so this is the usual install for the current Forever client (build 1.60.x, `_forever_`), and
 -- /pf ahkpath <folder> sets your own once (saved). The script's spot inside the addon,
 -- Interface\AddOns\PathFinder\AHK, is the same on every machine.
-local DEFAULT_PATH = "C:\\Program Files (x86)\\World of Warcraft\\_classic_beta_\\Interface\\AddOns\\PathFinder\\AHK"
+local DEFAULT_PATH = "C:\\Program Files (x86)\\World of Warcraft\\_forever_\\Interface\\AddOns\\PathFinder\\AHK"
 
 local function ScriptPath()
     return ns.db and ns.db.ahkFolder or DEFAULT_PATH

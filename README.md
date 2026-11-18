@@ -18,7 +18,7 @@ https://github.com/user-attachments/assets/8255db6e-b6b7-4bc4-9bbd-b695b33e1cb8
 
 
 ## Install
-1. Copy this `PathFinder` folder into `C:\Program Files (x86)\World of Warcraft\_classic_beta_\Interface\AddOns`.
+1. Run `install.ps1` (right-click > Run with PowerShell). It finds your `_forever_` client (or `_classic_beta_` on older installs) and copies the addon into `Interface\AddOns`. Or copy this `PathFinder` folder there by hand, e.g. `C:\Program Files (x86)\World of Warcraft\_forever_\Interface\AddOns`.
 2. Install [AutoHotkey v2](https://www.autohotkey.com/).
 3. Right-click `Interface\AddOns\PathFinder\AHK\PathFinder.ahk` and choose **Run script**. If you try to run the path finder without running the script it will prompt you with a directory where the script is likely located and you can run it there. Due to Blizzard's API limitations the addon is unable to run the script from the game, you must do it yourself.
 
@@ -47,6 +47,9 @@ Although the addon comes with default provided navigational maps, you can also c
 - Sometimes node placement on maps isn't precise enough for things like stairs or thin walkways. For this, there is a hotkey you can add under Keybindings -> Addons (I set mine to F5).
 - When you stand at a location and press F5, it will prompt you to add a node at that location to a particular map. If you open that map in map edit mode, the node will appear. This can be used for precise navigation up stairs, over ledges etc.
 
+## Editing a Map
+Use **Load map** in the editor bar to open any installed map (yours or built-in) and keep drawing. **Save map** stores your changes; a built-in map is saved as your own copy.
+
 ## Saving Your Map
 Once your map is completed, you should save it.
 - Give your map a name. It could be something like "Custom [Zone] Map" or "My Durotar Map" or just the name of the zone, etc. 
@@ -58,6 +61,9 @@ Once your map is completed, you should save it.
 ## Sharing Your Map
 I intend to take the approach of 1 file per map, so that nav maps can be easily shared among the community, as well as pushed to this repo so I can review and include them since creating paths for every zone is a lot of work, not to mention variations. This is currently possible using the addon but I intend to streamline it and will further explain the steps then.
 
+## Development
+Pure-Lua parts (map format, graph/routing) have tests that run outside the game: `python tests/run.py` (needs `pip install lupa`) or `lua tests/run.lua`.
+
 ## Future Functionality
 I plan to make the path finding features as practical and easy to use as can be done using the Lua API and AHK. Intended features include:
 - Incorporation of flight paths into routes
@@ -65,8 +71,6 @@ I plan to make the path finding features as practical and easy to use as can be 
 - Evasive maneuvers for hostile mobs
 - Support for methods of travel such as zeppelin, boats, and elevators
 - Enhanced commands for specific game locations (`/goto [class] trainer`), (`/goto [profession] trainer`), (`/goto mailbox`), (`/goto repair`), (`/goto org`), (`/goto orgrimmar`), (`/goto stormwind`)
-
-## Todo: Editing existing maps
 
 ## Blizzard ToS
 This addon violates numerous ToS provisions and thus using it puts your account at risk of being banned. It may be more or less likely based on the fact that it is mostly driven by Blizzard's own addon tooling. Use it under the assumption that you will be banned for using it and that way you will never be upset. 
