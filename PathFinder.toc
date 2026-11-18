@@ -15,6 +15,7 @@ UI.lua
 MapEditor.lua
 MapZoom.lua
 AHKLink.lua
+Steering.lua
 Navigator.lua
 Objective.lua
 Share.lua

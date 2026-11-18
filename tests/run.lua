@@ -83,5 +83,7 @@ local same = true
 for id, d in pairs(ref) do if not got[id] or math.abs(got[id] - d) > 1e-6 then same = false end end
 check("heap Dijkstra matches reference", same)
 
+dofile("tests/steering_test.lua")(H, check)
+
 print(format("%d passed, %d failed", passed, failed))
 os.exit(failed == 0 and 0 or 1)

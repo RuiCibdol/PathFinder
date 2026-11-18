@@ -34,18 +34,8 @@ ns.Navigator = Navigator
 
 local TICK = 0.03               -- seconds between steering updates
 local CURVE_PIECES = 6          -- steering steps around each rounded corner
-local LOOKAHEAD = 7             -- yards: steer at the first step at least this far ahead, so small bends don't make it turn
-local END_RADIUS = 1.5          -- yards: this close to the pin, done
-local EXACT_RADIUS = 1.5        -- yards: this close to a point of an exact map before heading for the next
-local TURN_DEADBAND = math.rad(4) -- heading error left alone
-local TURN_STEP = math.rad(10)  -- each this much more error is one more level of turn strength (1-3)
-local WALK_CONE = math.rad(50)  -- walk while the error is under this, else turn in place
-local NEAR_CONE = math.rad(25)  -- tighter cone close to a target, so it doesn't circle it
-local NEAR = 6                  -- yards
-local STUCK_WINDOW = 1          -- seconds of walking to check progress over
-local STUCK_MOVE = 1            -- yards: less than this in a window counts as stuck
 local STUCK_JUMP = 0.4          -- seconds to hold jump
-local STUCK_LIMIT = 4           -- stuck windows on one leg before giving up
+local Steering = ns.Steering    -- the decisions: Steering.lua
 local EXPECT_KEY = 0.6          -- seconds after asking AHK for Space that a Space press counts as AHK's
 
 local MARKER_PIXELS = 4         -- dot size; PathFinder.ahk DotSize must match
@@ -103,7 +93,7 @@ local targets = {}              -- { x, y, final } in world yards
 local routeNodes                -- point ids on the route, for the map highlight
 local markers = {}              -- { index, x, y }: each navigation point and the goal, with its steering point index
 local index = 1
-local stuckX, stuckY, stuckT, stuckCount = nil, nil, 0, 0
+local stuck = Steering.NewStuckTracker()
 local jumpUntil = 0
 local warnedNoPose = false
 
@@ -179,7 +169,8 @@ local function Travel(navMap, goal, label, goalId)
 
     routeNodes, routeMap = path, navMap
     active, index = true, 1
-    stuckX, stuckCount, jumpUntil, warnedNoPose = nil, 0, 0, false
+    stuck.Reset()
+    jumpUntil, warnedNoPose = 0, false
     ns.CheckAHK()
     ns.Print(format("walking to the %s on %s: %d points, %.0f yards", label, ns.Maps.Label(navMap), #path, yards))
     ns.RedrawMap()
@@ -292,48 +283,23 @@ local function Steer(now)
     end
     warnedNoPose = false
 
-    -- Steer at the first step at least LOOKAHEAD away (or the goal), skipping steps passed or
-    -- close by, so the heading changes smoothly instead of with every small step of a curve.
-    local target, vx, vy, d
-    while true do
-        target = targets[index]
-        vx, vy = target.x - px, target.y - py
-        d = math.sqrt(vx * vx + vy * vy)
-        if target.final then
-            if d <= END_RADIUS then Navigator.Stop("arrived") return "none" end
-            break
-        end
-        -- A point of an exact map must be reached, not just come within LOOKAHEAD of.
-        if d > (target.exact and EXACT_RADIUS or LOOKAHEAD) then break end
-        index, stuckCount, stuckX = index + 1, 0, nil
-    end
+    local advanced, _, vx, vy, d, arrived = Steering.Advance(targets, index, px, py)
+    if advanced ~= index then index = advanced stuck.Reset() end   -- a new leg: forget the stuck count
+    if arrived then Navigator.Stop("arrived") return "none" end
 
-    -- Bearing from north, counter-clockwise like GetPlayerFacing; err > 0 means the target is to the left.
-    local bearing = math.atan2(vx * wx + vy * wy, vx * nx + vy * ny)
-    local err = (bearing - facing + math.pi) % (2 * math.pi) - math.pi
-    local absErr = math.abs(err)
-
-    -- How hard to turn: 0 inside the deadband, then 1-3 as the error grows; positive is left.
-    local strength = absErr < TURN_DEADBAND and 0 or math.min(3, 1 + math.floor((absErr - TURN_DEADBAND) / TURN_STEP))
-    local turnLevel = err > 0 and strength or -strength
-    local walk = absErr < (d < NEAR and NEAR_CONE or WALK_CONE)
+    local err = Steering.HeadingError(vx, vy, facing, nx, ny, wx, wy)
+    local turnLevel, walk = Steering.Command(err, d)
 
     if walk then
-        if not stuckX then
-            stuckX, stuckY, stuckT = px, py, now
-        elseif now - stuckT >= STUCK_WINDOW then
-            if ns.Distance(px, py, stuckX, stuckY) < STUCK_MOVE then
-                stuckCount = stuckCount + 1
-                if stuckCount >= STUCK_LIMIT then
-                    Navigator.Stop(format("stuck %.0f yards from the next point", d))
-                    return "none"
-                end
-                jumpUntil = now + STUCK_JUMP
-            end
-            stuckX, stuckY, stuckT = px, py, now
+        local status = stuck.Update(px, py, now)
+        if status == "giveup" then
+            Navigator.Stop(format("stuck %.0f yards from the next point", d))
+            return "none"
+        elseif status == "stuck" then
+            jumpUntil = now + STUCK_JUMP
         end
     else
-        stuckX = nil
+        stuck.Pause()
     end
 
     if now < jumpUntil then return "jump", turnLevel end

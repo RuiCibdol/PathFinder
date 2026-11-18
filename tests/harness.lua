@@ -1,4 +1,6 @@
 -- Plain-Lua stand-ins for the WoW globals, so Graph.lua / Maps.lua run outside the game.
+-- WoW runs Lua 5.1 (math.atan2); newer Lua folded it into math.atan.
+math.atan2 = math.atan2 or function(y, x) return math.atan(y, x) end
 tinsert, tremove, sort, format = table.insert, table.remove, table.sort, string.format
 function wipe(t) for k in pairs(t) do t[k] = nil end return t end
 function strtrim(s) return (s:gsub("^%s+", ""):gsub("%s+$", "")) end
