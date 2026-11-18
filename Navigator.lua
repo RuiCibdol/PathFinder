@@ -89,6 +89,8 @@ SetCommand("none")
 ---------------------------------------------------------------------------
 
 local active = false
+local guiding = false             -- GPS mode for this route: no commands to AHK, you walk
+local guideErr, guideDist         -- heading error (radians, > 0 = left) and yards to the point being steered at
 local targets = {}              -- { x, y, final } in world yards
 local routeNodes                -- point ids on the route, for the map highlight
 local markers = {}              -- { index, x, y }: each navigation point and the goal, with its steering point index
@@ -98,11 +100,16 @@ local jumpUntil = 0
 local warnedNoPose = false
 
 function Navigator.IsActive() return active end
+-- For the arrow: heading error (radians, > 0 = turn left), yards to the point being steered at, GPS mode.
+function Navigator.Guidance()
+    if not (active and guideErr) then return nil end
+    return guideErr, guideDist, guiding
+end
 function Navigator.RouteNodes() return active and routeNodes or nil end
 
 function Navigator.Stop(reason)
     if not active then return end
-    active = false
+    active, guideErr, guideDist = false, nil, nil
     routeNodes = nil
     SetCommand("none")
     ns.Print("route ended:", reason)
@@ -119,7 +126,8 @@ local routeMap              -- the navigation map the route was planned on
 -- along links to the point nearest the goal (or to goalId), then straight to the goal. If the
 -- goal is closer than any point, straight there. label names the goal in chat.
 local function Travel(navMap, goal, label, goalId)
-    if InCombatLockdown() then ns.Print("can't start a route in combat") return end
+    local guide = ns.db.options.guideOnly and true or false
+    if InCombatLockdown() and not guide then ns.Print("can't start a route in combat") return end
     local _, c, px, py, facing = ns.GetPlayerPose()
     if not (px and facing) then ns.Print("your position isn't available here") return end
     if goal.c ~= c then ns.Print("the " .. label .. " is on another continent") return end
@@ -168,11 +176,11 @@ local function Travel(navMap, goal, label, goalId)
     end
 
     routeNodes, routeMap = path, navMap
-    active, index = true, 1
+    active, index, guiding, guideErr, guideDist = true, 1, guide, nil, nil
     stuck.Reset()
     jumpUntil, warnedNoPose = 0, false
-    ns.CheckAHK()
-    ns.Print(format("walking to the %s on %s: %d points, %.0f yards", label, ns.Maps.Label(navMap), #path, yards))
+    if not guiding then ns.CheckAHK() end
+    ns.Print(format("%s the %s on %s: %d points, %.0f yards", guiding and "guiding you to" or "walking to", label, ns.Maps.Label(navMap), #path, yards))
     ns.RedrawMap()
     ns.RefreshMapButtons()
     -- Out of the way, so you can see where you're walking.
@@ -272,7 +280,7 @@ end
 local function Steer(now)
     if UnitIsDeadOrGhost("player") then Navigator.Stop("dead") return "none" end
     if UnitOnTaxi("player") then Navigator.Stop("on a taxi") return "none" end
-    if GetCurrentKeyBoardFocus() then return "none" end   -- typing: let go, so nothing types into the box
+    if not guiding and GetCurrentKeyBoardFocus() then return "none" end   -- typing: let go, so nothing types into the box
 
     local mapID, _, px, py, facing = ns.GetPlayerPose()
     local nx, ny, wx, wy
@@ -288,6 +296,8 @@ local function Steer(now)
     if arrived then Navigator.Stop("arrived") return "none" end
 
     local err = Steering.HeadingError(vx, vy, facing, nx, ny, wx, wy)
+    guideErr, guideDist = err, d
+    if guiding then return "none" end     -- GPS mode: the arrow shows the way, nothing is pressed
     local turnLevel, walk = Steering.Command(err, d)
 
     if walk then
@@ -347,7 +357,7 @@ local keyWatch = CreateFrame("Frame")
 keyWatch:EnableKeyboard(true)
 keyWatch:SetPropagateKeyboardInput(true)
 keyWatch:SetScript("OnKeyDown", function(_, key)
-    if not active then return end
+    if not active or guiding then return end   -- GPS mode: your keys are yours
     local now = GetTime()
     if key == "W" and now < expectW then expectW = 0 return end
     if key == "SPACE" and now < expectSpace then expectSpace = 0 return end
@@ -356,7 +366,7 @@ keyWatch:SetScript("OnKeyDown", function(_, key)
     end
 end)
 
-ns.RegisterEvent("PLAYER_REGEN_DISABLED", function() Navigator.Stop("entered combat") end)
+ns.RegisterEvent("PLAYER_REGEN_DISABLED", function() if not guiding then Navigator.Stop("entered combat") end end)
 ns.RegisterEvent("PLAYER_LEAVING_WORLD", function() Navigator.Stop("loading screen") end)
 
 ---------------------------------------------------------------------------

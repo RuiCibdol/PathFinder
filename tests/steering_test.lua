@@ -117,6 +117,11 @@ return function(H, check)
     check("an exact point is not skipped at lookahead range", S.Advance(exactLine, 1, 0, 0) == 1)
     check("an exact point is skipped once reached", S.Advance(exactLine, 1, 0, 4.5) == 2)
 
+    check("hint ahead", S.Hint(0) == "ahead" and S.Hint(math.rad(10)) == "ahead")
+    check("hint left", S.Hint(math.rad(60)) == "left")
+    check("hint right", S.Hint(-math.rad(60)) == "right")
+    check("hint behind", S.Hint(math.rad(170)) == "behind" and S.Hint(-math.rad(170)) == "behind")
+
     local tr = S.NewStuckTracker()
     check("first tick ok", tr.Update(0, 0, 0) == "ok")
     check("progress ok", tr.Update(5, 0, 1.1) == "ok")

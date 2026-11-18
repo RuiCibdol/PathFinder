@@ -64,6 +64,14 @@ function Steering.Command(err, distance)
     return turnLevel, walk
 end
 
+-- Plain words for a heading error, for the GPS arrow: "ahead", "left", "right" or "behind".
+function Steering.Hint(err)
+    local a = math.abs(err)
+    if a < math.rad(15) then return "ahead" end
+    if a > math.rad(150) then return "behind" end
+    return err > 0 and "left" or "right"
+end
+
 -- Watches walking for progress. Update(px, py, now) while walking returns "ok", "stuck" (less than
 -- STUCK_MOVE yards over the last STUCK_WINDOW seconds: time to jump) or "giveup" (STUCK_LIMIT
 -- stuck windows in a row on one leg). Pause() when not walking (progress is measured from the

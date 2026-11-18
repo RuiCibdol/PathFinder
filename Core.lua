@@ -13,6 +13,8 @@ local DEFAULTS = {
         stopOnMoveKeys = true,  -- your movement keys stop the route (Escape always does)
         closeMap = true,        -- close the world map when travel starts
         extraZoom = true,       -- zoom levels past Blizzard's maximum on the world map (MapZoom.lua)
+        guideOnly = true,       -- GPS mode: show the way, you walk. Off: PathFinder.ahk walks for you (Navigator.lua)
+        arrow = true,           -- the direction arrow while travelling (Arrow.lua)
     },
     -- finish = { c, x, y }: the destination marker; routes always start where you stand
 }

@@ -28,6 +28,16 @@ local SECTIONS = {
           get = function() return ns.db.options.closeMap end,
           set = function(on) ns.db.options.closeMap = on end },
     } },
+    { title = "Travel mode", rows = {
+        { label = "GPS mode: show the way, I walk myself",
+          tooltip = "On: PathFinder only shows the route (arrow, minimap line, travel panel) and presses nothing, so PathFinder.ahk isn't needed. Off: PathFinder.ahk walks for you, which breaks Blizzard's terms of service.",
+          get = function() return ns.db.options.guideOnly end,
+          set = function(on) ns.db.options.guideOnly = on end },
+        { label = "Show the direction arrow",
+          tooltip = "An arrow on screen that points where to go, with the yards to the next point. Drag it to move it.",
+          get = function() return ns.db.options.arrow end,
+          set = function(on) ns.db.options.arrow = on end },
+    } },
     { title = "Stopping", rows = {
         { label = "Stop when I press a movement key",
           tooltip = "Whatever you have bound to forward, back, turn, strafe, jump or autorun. Escape always stops the route.",

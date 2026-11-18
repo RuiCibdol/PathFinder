@@ -20,6 +20,7 @@ Navigator.lua
 Objective.lua
 Share.lua
 HUD.lua
+Arrow.lua
 Minimap.lua
 WorldView.lua
 MinimapButton.lua
