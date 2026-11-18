@@ -18,7 +18,7 @@ https://github.com/user-attachments/assets/8255db6e-b6b7-4bc4-9bbd-b695b33e1cb8
 
 
 ## Install
-1. Run `install.ps1` (right-click > Run with PowerShell). It finds your `_forever_` client (or `_classic_beta_` on older installs) and copies the addon into `Interface\AddOns`. Or copy this `PathFinder` folder there by hand, e.g. `C:\Program Files (x86)\World of Warcraft\_forever_\Interface\AddOns`.
+1. Run `powershell -ExecutionPolicy Bypass -File install.ps1` in this folder (the bypass applies to that one run only; plain right-click > Run with PowerShell fails when scripts are disabled). It finds your `_forever_` client (or `_classic_beta_` on older installs) and copies the addon into `Interface\AddOns`. Or copy this `PathFinder` folder there by hand, e.g. `C:\Program Files (x86)\World of Warcraft\_forever_\Interface\AddOns`.
 2. Install [AutoHotkey v2](https://www.autohotkey.com/).
 3. Right-click `Interface\AddOns\PathFinder\AHK\PathFinder.ahk` and choose **Run script**. If you try to run the path finder without running the script it will prompt you with a directory where the script is likely located and you can run it there. Due to Blizzard's API limitations the addon is unable to run the script from the game, you must do it yourself.
 
